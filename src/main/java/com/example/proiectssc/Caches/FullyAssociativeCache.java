@@ -1,5 +1,6 @@
 package com.example.proiectssc.Caches;
 
+import com.example.proiectssc.Responses.Actions;
 import com.example.proiectssc.Others.CMD;
 
 import java.util.*;
@@ -12,7 +13,8 @@ public class FullyAssociativeCache extends Cache {
         super(blockSize, cacheLines, L1, L2);
     }
 
-    public void runCmd(String cmd, int address, int data) {
+    public Actions runCmd(String cmd, int address, int data) {
+        Actions actions = new Actions();
         int blockNr = address / getBlockSize();
         int index = address % getBlockSize();
 
@@ -36,10 +38,10 @@ public class FullyAssociativeCache extends Cache {
         }
 
         if (helper1.containsKey(blockNr)) {
-            System.out.println("Hit in L1");
+            actions.getActions().add("Hit in L1");
             if (cmd.equals(CMD.READ.toString())) {
                 if (helper1.get(blockNr).get(index) == Integer.MAX_VALUE) {
-                    System.out.println("empty");
+                    actions.getActions().add("empty");
                 } else {
                     System.out.println(helper1.get(blockNr).get(index));
                 }
@@ -48,10 +50,10 @@ public class FullyAssociativeCache extends Cache {
                 helper2.get(blockNr).set(index, data);
             }
         } else if (helper2.containsKey(blockNr)) {
-            System.out.println("Hit in L2");
+            actions.getActions().add("Hit in L2");
             if (cmd.equals(CMD.READ.toString())) {
                 if (helper2.get(blockNr).get(index) == Integer.MAX_VALUE) {
-                    System.out.println("empty");
+                    actions.getActions().add("empty");
                 } else {
                     System.out.println(helper2.get(blockNr).get(index));
                 }
@@ -61,13 +63,13 @@ public class FullyAssociativeCache extends Cache {
             if (helper1.size() < getCacheLines() / 2) {
                 helper1.put(blockNr, helper2.get(blockNr));
             }
-            replaceBlockInCache(helper1, freq1);
+            actions.getActions().add(replaceBlockInCache(helper1, freq1, "L1"));
             helper1.put(blockNr, helper2.get(blockNr));
         } else {
-            System.out.println("Address not found");
+            actions.getActions().add("Address not found");
             if (helper1.size() == getCacheLines() / 2 && helper2.size() == getCacheLines()) {
-                replaceBlockInCache(helper1, freq1);
-                replaceBlockInCache(helper2, freq2);
+                actions.getActions().add(replaceBlockInCache(helper1, freq1, "L1"));
+                actions.getActions().add(replaceBlockInCache(helper2, freq2, "L2"));
                 ArrayList<Integer> helper = new ArrayList<>();
                 for (int j = 0; j < getBlockSize(); j++) {
                     helper.add(Integer.MAX_VALUE);
@@ -88,7 +90,7 @@ public class FullyAssociativeCache extends Cache {
                 helper1.put(blockNr, helper);
                 helper2.put(blockNr, helper);
             } else {
-                replaceBlockInCache(helper1,freq1);
+                actions.getActions().add(replaceBlockInCache(helper1,freq1, "L1"));
                 ArrayList<Integer> helper = new ArrayList < > ();
                 for (int j = 0; j < getBlockSize(); j++) {
                     helper.add(Integer.MAX_VALUE);
@@ -100,5 +102,6 @@ public class FullyAssociativeCache extends Cache {
                 helper2.put(blockNr, helper);
             }
         }
+        return actions;
     }
 }

@@ -1,5 +1,6 @@
 package com.example.proiectssc.Caches;
 
+import com.example.proiectssc.Responses.Actions;
 import com.example.proiectssc.Others.CMD;
 
 import java.util.*;
@@ -11,7 +12,8 @@ public class DirectMappedCache extends Cache {
         super(blockSize, cacheLines, L1, L2);
     }
 
-    public void runCmd(String cmd, int address, int data) {
+    public Actions runCmd(String cmd, int address, int data) {
+        Actions actions = new Actions();
         int blockNr = address / getBlockSize();
         int index = address % getBlockSize();
 
@@ -22,10 +24,10 @@ public class DirectMappedCache extends Cache {
         HashMap<Integer, ArrayList<Integer>> helper2 = getL2().get(l2CacheLineIndex);
 
         if (helper1 != null && helper1.containsKey(blockNr)) {
-            System.out.println("Hit in L1");
+            actions.getActions().add("Hit in L1");
             if (cmd.equals(CMD.READ.toString())) {
                 if (helper1.get(blockNr).get(index) == Integer.MAX_VALUE) {
-                    System.out.println("empty");
+                    actions.getActions().add("empty");
                 } else {
                     System.out.println(helper1.get(blockNr).get(index));
                 }
@@ -36,10 +38,10 @@ public class DirectMappedCache extends Cache {
                 getL2().put(l2CacheLineIndex, helper2);
             }
         } else if (helper2 != null && helper2.containsKey(blockNr)) {
-            System.out.println("Hit in L2");
+            actions.getActions().add("Hit in L2");
             if (cmd.equals(CMD.READ.toString())) {
                 if (helper2.get(blockNr).get(index) == Integer.MAX_VALUE) {
-                    System.out.println("empty");
+                    actions.getActions().add("empty");
                 } else {
                     System.out.println(helper2.get(blockNr).get(index));
                 }
@@ -49,14 +51,14 @@ public class DirectMappedCache extends Cache {
             HashMap<Integer, ArrayList<Integer>> hp = new HashMap<>();
             if(helper1!=null){
                 for (Entry < Integer, ArrayList < Integer >> mapElement: helper1.entrySet()) {
-                    System.out.println("Block " + getBinary(Integer.parseInt(mapElement.getKey() + "")) + " gets replaced in L1 cache");
+                    actions.getActions().add("Block " + getBinary(Integer.parseInt(mapElement.getKey() + "")) + " gets replaced in L1 cache");
                 }
             }
             hp.put(blockNr, helper2.get(blockNr));
             getL1().put(l1CacheLineIndex, hp);
             getL2().put(l2CacheLineIndex, helper2);
         } else {
-            System.out.println("Address not found");
+            actions.getActions().add("Address not found");
             ArrayList<Integer> arr = new ArrayList<>();
             for (int j = 0; j < getBlockSize(); j++) {
                 arr.add(Integer.MAX_VALUE);
@@ -76,7 +78,7 @@ public class DirectMappedCache extends Cache {
                 helper2.put(blockNr, arr);
                 getL2().put(l2CacheLineIndex, helper2);
                 for (Entry<Integer, ArrayList<Integer>> mapElement: helper1.entrySet()) {
-                    System.out.println("Block " + getBinary(Integer.parseInt(mapElement.getKey() + "")) + " gets replaced in L1 cache");
+                    actions.getActions().add("Block " + getBinary(Integer.parseInt(mapElement.getKey() + "")) + " gets replaced in L1 cache");
                 }
                 getL1().put(l1CacheLineIndex, helper1);
             } else {
@@ -84,15 +86,16 @@ public class DirectMappedCache extends Cache {
                 hp.put(blockNr, arr);
                 if(helper1 != null) {
                     for (Entry<Integer, ArrayList<Integer>> mapElement : helper1.entrySet()) {
-                        System.out.println("Block " + getBinary(Integer.parseInt(mapElement.getKey() + "")) + " gets replaced in L1 cache");
+                        actions.getActions().add("Block " + getBinary(Integer.parseInt(mapElement.getKey() + "")) + " gets replaced in L1 cache");
                     }
                 }
                 for (Entry<Integer, ArrayList<Integer>> mapElement: helper2.entrySet()) {
-                    System.out.println("Block " + getBinary(Integer.parseInt(mapElement.getKey() + "")) + " gets replaced in L2 cache");
+                    actions.getActions().add("Block " + getBinary(Integer.parseInt(mapElement.getKey() + "")) + " gets replaced in L2 cache");
                 }
                 getL1().put(l1CacheLineIndex, hp);
                 getL2().put(l2CacheLineIndex, hp);
             }
         }
+        return actions;
     }
 }

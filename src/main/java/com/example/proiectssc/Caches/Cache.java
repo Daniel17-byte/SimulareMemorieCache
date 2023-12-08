@@ -1,5 +1,8 @@
 package com.example.proiectssc.Caches;
 
+import com.example.proiectssc.Responses.Address;
+import com.example.proiectssc.Responses.CacheTable;
+import com.example.proiectssc.Responses.CacheTables;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -41,7 +44,7 @@ public class Cache {
         frequencyList.removeIf(integer -> integer == item);
     }
 
-    public void replaceBlockInCache(HashMap<Integer, ArrayList<Integer>> cache, ArrayList<Integer> frequencyList) {
+    public String replaceBlockInCache(HashMap<Integer, ArrayList<Integer>> cache, ArrayList<Integer> frequencyList, String cacheLevel) {
         int maxDistance = Integer.MIN_VALUE;
 
         for (Map.Entry<Integer, ArrayList<Integer>> mapElement : cache.entrySet()) {
@@ -60,44 +63,52 @@ public class Cache {
         int u = frequencyList.size() - maxDistance - 1;
         int val = frequencyList.get(u);
 
-        System.out.println("Block " + getBinary(val) + " gets replaced in cache");
         removeAll(frequencyList, val);
         cache.remove(val);
+        return new String("Block " + getBinary(val) + " gets replaced in cache " + cacheLevel);
     }
 
-    public void printMapStrings(){
-        System.out.println("L1 Cache : ");
-        printMap(getL1());
-        System.out.println("---------------------------------");
-        System.out.println("L2 Cache : ");
-        printMap(getL2());
-        System.out.println("---------------------------------");
+    public CacheTables getViewCacheResponse(){
+        CacheTables cacheTables = new CacheTables();
+        cacheTables.setL1Cache(getCache(L1));
+        cacheTables.setL2Cache(getCache(L2));
+        return cacheTables;
     }
 
-    public void printMap(HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> map) {
-        System.out.println("                     Block number    Block Address         Block Content");
+    public ArrayList<CacheTable> getCache(HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> map) {
+        ArrayList<CacheTable> cacheEntries = new ArrayList<>();
         for (Map.Entry<Integer, HashMap<Integer, ArrayList<Integer>>> mapElement: map.entrySet()) {
             HashMap<Integer, ArrayList<Integer>> h = mapElement.getValue();
+            CacheTable cacheTable = new CacheTable();
             for (Map.Entry<Integer, ArrayList<Integer>> mapElement2: h.entrySet()) {
-                System.out.print(mapElement.getKey() + "  \t" + "\t" + "\t" + mapElement2.getKey() + "  \t    " + getBinary(mapElement2.getKey()) + "   \t ");
+                cacheTable.setCacheLine(mapElement.getKey());
+                cacheTable.setBlockNumber(mapElement2.getKey());
+                cacheTable.setBlockAddress(getBinary(mapElement2.getKey()));
                 for (int i = 0; i < mapElement2.getValue().size(); i++) {
                     if (mapElement2.getValue().get(i) == Integer.MAX_VALUE) {
-                        System.out.print("Empty" + "  ");
+                        cacheTable.getBlockContent().add(new String("Empty"));
                     } else {
-                        System.out.print(mapElement2.getValue().get(i) + "  ");
+                        cacheTable.getBlockContent().add(mapElement2.getValue().get(i));
                     }
                 }
-                System.out.println();
             }
+            cacheEntries.add(cacheTable);
         }
+        return cacheEntries;
     }
 
-    public void getAddress(int address, int k) {
+    public Address getAddress(int address, int k) {
         String str = getBinary(address);
 
         int b = getN(getBlockSize());
-        int setNr1 = getN(k / 2);
-        int setNr2 = getN(k);
+        int setNr1 = 0;
+        int setNr2 = 0;
+
+        if (k != 0){
+            setNr1 = getN(k / 2);
+            setNr2 = getN(k);
+        }
+
         int beginIndex = str.length() - b;
 
         String offset = str.substring(beginIndex);
@@ -106,7 +117,7 @@ public class Cache {
         String line2 = str.substring(beginIndex - setNr2, beginIndex);
         String tag2 = str.substring(0, beginIndex - setNr2);
 
-        System.out.println("Physical Address: " + str + "; Tag: " + tag1 + ", Set-offset: " + line1 + ", Word-offset: " +
+        return new Address("Physical Address: " + str + "; Tag: " + tag1 + ", Set-offset: " + line1 + ", Word-offset: " +
                 offset + " for L1 cache; " + " Tag: " + tag2 + ", Set-offset: " + line2 + ", Word-offset: " +
                 offset + " for L2 cache");
     }
