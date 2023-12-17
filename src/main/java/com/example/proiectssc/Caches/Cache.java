@@ -25,12 +25,8 @@ public class Cache {
         this.L2 = L2;
     }
 
-    public int getN(int n) {
-        return Integer.numberOfTrailingZeros(Integer.highestOneBit(n));
-    }
-
     public String getBinary(int n) {
-        int b = getN(blockSize);
+        int b = Integer.numberOfTrailingZeros(Integer.highestOneBit(getBlockSize()));
         String binaryRepresentation = Integer.toBinaryString(n);
         int leadingZerosToAdd = 16 - b - binaryRepresentation.length();
         if (leadingZerosToAdd > 0) {
@@ -40,11 +36,11 @@ public class Cache {
         }
     }
 
-    public void removeAll(ArrayList<Integer> frequencyList, int item) {
-        frequencyList.removeIf(integer -> integer == item);
+    public String replaceBlockInCache(HashMap<Integer, ArrayList<Integer>> cache, ArrayList<Integer> frequencyList, String cacheLevel) {
+        return LRU(cache,frequencyList, cacheLevel);
     }
 
-    public String replaceBlockInCache(HashMap<Integer, ArrayList<Integer>> cache, ArrayList<Integer> frequencyList, String cacheLevel) {
+    public String LRU(HashMap<Integer, ArrayList<Integer>> cache, ArrayList<Integer> frequencyList, String cacheLevel) {
         int maxDistance = Integer.MIN_VALUE;
 
         for (Map.Entry<Integer, ArrayList<Integer>> mapElement : cache.entrySet()) {
@@ -63,9 +59,39 @@ public class Cache {
         int u = frequencyList.size() - maxDistance - 1;
         int val = frequencyList.get(u);
 
-        removeAll(frequencyList, val);
+        frequencyList.removeIf(integer -> integer == val);
         cache.remove(val);
+
         return new String("Block " + getBinary(val) + " gets replaced in cache " + cacheLevel);
+    }
+
+    public String FIFO(HashMap<Integer, ArrayList<Integer>> cache, ArrayList<Integer> frequencyList, String cacheLevel) {
+        int val = frequencyList.get(0);
+
+        frequencyList.removeIf(integer -> integer == val);
+        cache.remove(val);
+
+        frequencyList.add(val);
+
+        return new String("Block " + getBinary(val) + " gets replaced in cache " + cacheLevel);
+    }
+
+    public String LFU(HashMap<Integer, Integer> cache, ArrayList<Integer> frequencyList, String cacheLevel) {
+        int minFrequency = Integer.MAX_VALUE;
+        int valToRemove = -1;
+
+        for (Map.Entry<Integer, Integer> entry : cache.entrySet()) {
+            int frequency = entry.getValue();
+            if (frequency < minFrequency) {
+                minFrequency = frequency;
+                valToRemove = entry.getKey();
+            }
+        }
+
+        frequencyList.remove((Integer) valToRemove);
+        cache.remove(valToRemove);
+
+        return new String("Block " + getBinary(valToRemove) + " gets replaced in cache " + cacheLevel);
     }
 
     public CacheTables getViewCacheResponse(){
@@ -100,13 +126,13 @@ public class Cache {
     public Address getAddress(int address, int k) {
         String str = getBinary(address);
 
-        int b = getN(getBlockSize());
+        int b = Integer.numberOfTrailingZeros(Integer.highestOneBit(getBlockSize()));
         int setNr1 = 0;
         int setNr2 = 0;
 
         if (k != 0){
-            setNr1 = getN(k / 2);
-            setNr2 = getN(k);
+            setNr1 = Integer.numberOfTrailingZeros(Integer.highestOneBit(k / 2));
+            setNr2 = Integer.numberOfTrailingZeros(Integer.highestOneBit(k));
         }
 
         int beginIndex = str.length() - b;

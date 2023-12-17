@@ -6,8 +6,8 @@ import com.example.proiectssc.Others.CMD;
 import java.util.*;
 
 public class FullyAssociativeCache extends Cache {
-    ArrayList<Integer> freq1 = new ArrayList<>();
-    ArrayList<Integer> freq2 = new ArrayList<>();
+    private final ArrayList<Integer> freq1 = new ArrayList<>();
+    private final ArrayList<Integer> freq2 = new ArrayList<>();
 
     public FullyAssociativeCache(int blockSize, int cacheLines, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L1, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L2) {
         super(blockSize, cacheLines, L1, L2);
@@ -15,6 +15,9 @@ public class FullyAssociativeCache extends Cache {
 
     public Actions runCmd(String cmd, int address, int data) {
         Actions actions = new Actions();
+
+        actions.getActions().add("Doing operation : " + cmd +" data : " + data + " from/to " + address);
+
         int blockNr = address / getBlockSize();
         int index = address % getBlockSize();
 
@@ -43,7 +46,7 @@ public class FullyAssociativeCache extends Cache {
                 if (helper1.get(blockNr).get(index) == Integer.MAX_VALUE) {
                     actions.getActions().add("empty");
                 } else {
-                    System.out.println(helper1.get(blockNr).get(index));
+                    actions.getActions().add(helper1.get(blockNr).get(index).toString());
                 }
             } else if (cmd.equals(CMD.WRITE.toString())) {
                 helper1.get(blockNr).set(index, data);
@@ -55,7 +58,7 @@ public class FullyAssociativeCache extends Cache {
                 if (helper2.get(blockNr).get(index) == Integer.MAX_VALUE) {
                     actions.getActions().add("empty");
                 } else {
-                    System.out.println(helper2.get(blockNr).get(index));
+                    actions.getActions().add(helper2.get(blockNr).get(index).toString());
                 }
             } else if (cmd.equals(CMD.WRITE.toString())) {
                 helper2.get(blockNr).set(index, data);

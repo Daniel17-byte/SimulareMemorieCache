@@ -46,8 +46,8 @@ public class DirectMappedCacheController {
             Test test = new Test();
             test.setNrTest(i);
             boolean randomBoolean = random.nextBoolean();
-            int randomAddress = random.nextInt(0, Integer.MAX_VALUE);
-            int randomData = random.nextInt(Integer.MIN_VALUE, Integer.MAX_VALUE);
+            int randomAddress = random.nextInt(0, 1000);
+            int randomData = random.nextInt(0, 1000);
             if (randomBoolean){
                 test.setActions(directMappedCache.runCmd(CMD.READ.toString(),randomAddress,randomData));
             } else {

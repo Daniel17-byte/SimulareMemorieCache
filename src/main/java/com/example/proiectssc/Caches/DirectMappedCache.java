@@ -14,6 +14,9 @@ public class DirectMappedCache extends Cache {
 
     public Actions runCmd(String cmd, int address, int data) {
         Actions actions = new Actions();
+
+        actions.getActions().add("Doing operation : " + cmd +" data : " + data + " from/to " + address);
+
         int blockNr = address / getBlockSize();
         int index = address % getBlockSize();
 
@@ -29,7 +32,7 @@ public class DirectMappedCache extends Cache {
                 if (helper1.get(blockNr).get(index) == Integer.MAX_VALUE) {
                     actions.getActions().add("empty");
                 } else {
-                    System.out.println(helper1.get(blockNr).get(index));
+                    actions.getActions().add(helper1.get(blockNr).get(index).toString());
                 }
             } else if (cmd.equals(CMD.WRITE.toString())) {
                 helper1.get(blockNr).set(index, data);
@@ -43,7 +46,7 @@ public class DirectMappedCache extends Cache {
                 if (helper2.get(blockNr).get(index) == Integer.MAX_VALUE) {
                     actions.getActions().add("empty");
                 } else {
-                    System.out.println(helper2.get(blockNr).get(index));
+                    actions.getActions().add(helper2.get(blockNr).get(index).toString());
                 }
             } else if (cmd.equals(CMD.WRITE.toString())) {
                 helper2.get(blockNr).set(index, data);

@@ -18,6 +18,9 @@ public class SetAssociativeCache extends Cache {
 
     public Actions runCmd(String cmd, int address, int data) {
         Actions actions = new Actions();
+
+        actions.getActions().add("Doing operation : " + cmd +" data : " + data + " from/to " + address);
+
         int blockNr = address / getBlockSize();
         int index = address % getBlockSize();
 
@@ -39,7 +42,7 @@ public class SetAssociativeCache extends Cache {
                 if (helper1.get(blockNr).get(index) == Integer.MAX_VALUE) {
                     actions.getActions().add("empty");
                 } else {
-                    System.out.println(helper1.get(blockNr).get(index));
+                    actions.getActions().add(helper1.get(blockNr).get(index).toString());
                 }
             } else if(cmd.equals(CMD.WRITE.toString())){
                 helper1.get(blockNr).set(index, data);
@@ -53,7 +56,7 @@ public class SetAssociativeCache extends Cache {
                 if (helper2.get(blockNr).get(index) == Integer.MAX_VALUE) {
                     actions.getActions().add("empty");
                 } else {
-                    System.out.println(getL2().get(blockNr).get(index));
+                    actions.getActions().add(getL2().get(blockNr).get(index).toString());
                 }
             } else if (cmd.equals(CMD.WRITE.toString())) {
                 helper2.get(blockNr).set(index, data);
