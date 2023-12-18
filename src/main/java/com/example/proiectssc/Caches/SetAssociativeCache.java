@@ -7,10 +7,11 @@ import lombok.Getter;
 import java.util.*;
 
 public class SetAssociativeCache extends Cache {
-    private final ArrayList<Integer> freq1 = new ArrayList<>();
-    private final ArrayList<Integer> freq2 = new ArrayList<>();
+    private final ArrayList<Integer> frequencyListL1 = new ArrayList<>();
+    private final ArrayList<Integer> frequencyListL2 = new ArrayList<>();
     @Getter
     private final int k;
+
     public SetAssociativeCache(int blockSize, int cacheLines, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L1, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L2, int k) {
         super(blockSize, cacheLines, L1, L2);
         this.k = k;
@@ -27,134 +28,102 @@ public class SetAssociativeCache extends Cache {
         int l1CacheSets = (getCacheLines() / 2) / k;
         int l2CacheSets = getCacheLines() / k;
 
-        freq1.add(blockNr);
-        freq2.add(blockNr);
+        frequencyListL1.add(blockNr);
+        frequencyListL2.add(blockNr);
 
         int l1CacheSetIndex = blockNr % l1CacheSets;
         int l2CacheSetIndex = blockNr % l2CacheSets;
 
-        HashMap<Integer, ArrayList<Integer>> helper1 = getL1().get(l1CacheSetIndex);
-        HashMap<Integer, ArrayList<Integer>> helper2 = getL2().get(l2CacheSetIndex);
+        HashMap<Integer, ArrayList<Integer>> helperL1 = getL1().get(l1CacheSetIndex);
+        HashMap<Integer, ArrayList<Integer>> helperL2 = getL2().get(l2CacheSetIndex);
 
-        if (helper1 != null && helper1.containsKey(blockNr)) {
+        if (helperL1 != null && helperL1.containsKey(blockNr)) {
             actions.getActions().add("Hit in L1");
+
             if(cmd.equals(CMD.READ.toString())) {
-                if (helper1.get(blockNr).get(index) == Integer.MAX_VALUE) {
-                    actions.getActions().add("empty");
-                } else {
-                    actions.getActions().add(helper1.get(blockNr).get(index).toString());
-                }
+                readData(helperL1, actions, blockNr, index);
             } else if(cmd.equals(CMD.WRITE.toString())){
-                helper1.get(blockNr).set(index, data);
-                helper2.get(blockNr).set(index, data);
-                getL1().put(l1CacheSetIndex, helper1);
-                getL2().put(l2CacheSetIndex, helper2);
+                helperL1.get(blockNr).set(index, data);
+                helperL2.get(blockNr).set(index, data);
+                getL1().put(l1CacheSetIndex, helperL1);
+                getL2().put(l2CacheSetIndex, helperL2);
             }
-        } else if (helper2 != null && helper2.containsKey(blockNr)) {
+        } else if (helperL2 != null && helperL2.containsKey(blockNr)) {
             actions.getActions().add("Hit in L2");
+
             if (cmd.equals(CMD.READ.toString())) {
-                if (helper2.get(blockNr).get(index) == Integer.MAX_VALUE) {
-                    actions.getActions().add("empty");
-                } else {
-                    actions.getActions().add(getL2().get(blockNr).get(index).toString());
-                }
+                readData(helperL2, actions, blockNr, index);
             } else if (cmd.equals(CMD.WRITE.toString())) {
-                helper2.get(blockNr).set(index, data);
-                getL2().put(l2CacheSetIndex, helper2);
+                helperL2.get(blockNr).set(index, data);
+                getL2().put(l2CacheSetIndex, helperL2);
             }
 
-            if (helper1 != null && helper1.size() < k) {
-                ArrayList<Integer> h = new ArrayList<>();
-                for (int j = 0; j < getBlockSize(); j++) {
-                    h.add(Integer.MAX_VALUE);
-                }
-                if (cmd.equals(CMD.WRITE.toString())) {
-                    h.set(index, data);
-                }
-                helper1.put(blockNr, h);
-                getL1().put(l1CacheSetIndex, helper1);
+            if (helperL1 != null && helperL1.size() < k) {
+                ArrayList<Integer> helper = writeData(cmd, index, data);
+                helperL1.put(blockNr, helper);
+                getL1().put(l1CacheSetIndex, helperL1);
             }
 
-            if (helper1 != null){
-                actions.getActions().add(replaceBlockInCache(helper1, freq1, "L1"));
-                helper1.put(blockNr, helper2.get(blockNr));
+            if (helperL1 != null){
+                actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
+                helperL1.put(blockNr, helperL2.get(blockNr));
             }
 
-            getL1().put(l1CacheSetIndex, helper1);
+            getL1().put(l1CacheSetIndex, helperL1);
         } else {
             actions.getActions().add("Address not found");
-            if (helper1 == null && helper2 == null) {
-                ArrayList<Integer> arr = new ArrayList<>();
-                for (int j = 0; j < getBlockSize(); j++) {
-                    arr.add(Integer.MAX_VALUE);
-                }
-                if (cmd.equals(CMD.WRITE.toString())) {
-                    arr.set(index, data);
-                }
-                helper1 = new HashMap < > ();
-                helper1.put(blockNr, arr);
-                helper2 = new HashMap < > ();
-                helper2.put(blockNr, arr);
-                getL1().put(l1CacheSetIndex, helper1);
-                getL2().put(l2CacheSetIndex, helper2);
+            if (helperL1 == null && helperL2 == null) {
+                ArrayList<Integer> helper = writeData(cmd, index, data);
 
-            } else if (helper1 != null && helper2 == null) {
-                ArrayList<Integer> arr = new ArrayList<>();
-                for (int j = 0; j < getBlockSize(); j++) {
-                    arr.add(Integer.MAX_VALUE);
-                }
-                if (cmd.equals(CMD.WRITE.toString())) {
-                    arr.set(index, data);
-                }
-                helper2 = new HashMap < > ();
-                helper2.put(blockNr, arr);
-                getL2().put(l2CacheSetIndex, helper2);
-                actions.getActions().add(replaceBlockInCache(helper1, freq1, "L1"));
+                helperL1 = new HashMap<>();
+                helperL2 = new HashMap<>();
+                helperL1.put(blockNr, helper);
+                helperL2.put(blockNr, helper);
 
-                helper1.put(blockNr, arr);
-                getL1().put(l1CacheSetIndex, helper1);
+                getL1().put(l1CacheSetIndex, helperL1);
+                getL2().put(l2CacheSetIndex, helperL2);
+            } else if (helperL1 != null && helperL2 == null) {
+                actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
 
-            } else if (helper1 != null && helper1.size() == k && helper2.size() == k) {
-                actions.getActions().add(replaceBlockInCache(helper1, freq1, "L1"));
-                actions.getActions().add(replaceBlockInCache(helper2, freq2, "L2"));
-                ArrayList<Integer> ar = new ArrayList<>();
-                for (int j = 0; j < getBlockSize(); j++) {
-                    ar.add(Integer.MAX_VALUE);
-                }
-                if (cmd.equals(CMD.WRITE.toString())) {
-                    ar.set(index, data);
-                }
-                helper1.put(blockNr, ar);
-                helper2.put(blockNr, ar);
-                getL1().put(l1CacheSetIndex, helper1);
-                getL2().put(l2CacheSetIndex, helper2);
-            } else if (helper1 != null && helper1.size() < k && helper2.size() < k) {
-                ArrayList<Integer> ar = new ArrayList<>();
-                for (int j = 0; j < getBlockSize(); j++) {
-                    ar.add(Integer.MAX_VALUE);
-                }
-                if (cmd.equals(CMD.WRITE.toString())) {
-                    ar.set(index, data);
-                }
-                helper1.put(blockNr, ar);
-                helper2.put(blockNr, ar);
-                getL1().put(l1CacheSetIndex, helper1);
-                getL2().put(l2CacheSetIndex, helper2);
+                ArrayList<Integer> helper = writeData(cmd, index, data);
+
+                helperL2 = new HashMap<>();
+                helperL2.put(blockNr, helper);
+                helperL1.put(blockNr, helper);
+
+                getL1().put(l1CacheSetIndex, helperL1);
+                getL2().put(l2CacheSetIndex, helperL2);
+            } else if (helperL1 != null && helperL1.size() == k && helperL2.size() == k) {
+                actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
+                actions.getActions().add(replaceBlockInCache(helperL2, frequencyListL2, "L2"));
+
+                ArrayList<Integer> helper = writeData(cmd, index, data);
+
+                helperL1.put(blockNr, helper);
+                helperL2.put(blockNr, helper);
+
+                getL1().put(l1CacheSetIndex, helperL1);
+                getL2().put(l2CacheSetIndex, helperL2);
+            } else if (helperL1 != null && helperL1.size() < k && helperL2.size() < k) {
+                ArrayList<Integer> helper = writeData(cmd, index, data);
+
+                helperL1.put(blockNr, helper);
+                helperL2.put(blockNr, helper);
+
+                getL1().put(l1CacheSetIndex, helperL1);
+                getL2().put(l2CacheSetIndex, helperL2);
             } else {
-                ArrayList<Integer> ar = new ArrayList<>();
-                for (int j = 0; j < getBlockSize(); j++) {
-                    ar.add(Integer.MAX_VALUE);
+                ArrayList<Integer> helper = writeData(cmd, index, data);
+
+                if (helperL1 != null) {
+                    actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
+                    helperL1.put(blockNr, helper);
                 }
-                if (cmd.equals(CMD.WRITE.toString())) {
-                    ar.set(index, data);
-                }
-                if (helper1 != null) {
-                    actions.getActions().add(replaceBlockInCache(helper1, freq1, "L1"));
-                    helper1.put(blockNr, ar);
-                }
-                helper2.put(blockNr, ar);
-                getL1().put(l1CacheSetIndex, helper1);
-                getL2().put(l2CacheSetIndex, helper2);
+
+                helperL2.put(blockNr, helper);
+
+                getL1().put(l1CacheSetIndex, helperL1);
+                getL2().put(l2CacheSetIndex, helperL2);
             }
         }
         return actions;

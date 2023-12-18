@@ -1,5 +1,7 @@
 package com.example.proiectssc.Caches;
 
+import com.example.proiectssc.Others.CMD;
+import com.example.proiectssc.Responses.Actions;
 import com.example.proiectssc.Responses.Address;
 import com.example.proiectssc.Responses.CacheTable;
 import com.example.proiectssc.Responses.CacheTables;
@@ -23,6 +25,25 @@ public class Cache {
         this.cacheLines = cacheLines;
         this.L1 = L1;
         this.L2 = L2;
+    }
+
+    public ArrayList<Integer> writeData(String cmd, int index, int data){
+        ArrayList<Integer> helper = new ArrayList < > ();
+        for (int j = 0; j < getBlockSize(); j++) {
+            helper.add(Integer.MAX_VALUE);
+        }
+        if (cmd.equals(CMD.WRITE.toString())) {
+            helper.set(index, data);
+        }
+        return helper;
+    }
+
+    public void readData(HashMap<Integer, ArrayList<Integer>> helper, Actions actions, int blockNr, int index){
+        if (helper.get(blockNr).get(index) == Integer.MAX_VALUE) {
+            actions.getActions().add("Data : empty");
+        } else {
+            actions.getActions().add("Data : " + helper.get(blockNr).get(index).toString());
+        }
     }
 
     public String getBinary(int n) {
