@@ -1,5 +1,6 @@
 package com.example.proiectssc.Caches;
 
+import com.example.proiectssc.Others.MemoryRepository;
 import com.example.proiectssc.Responses.Actions;
 import com.example.proiectssc.Others.CMD;
 
@@ -7,8 +8,8 @@ import java.util.*;
 
 public class DirectMappedCache extends Cache {
 
-    public DirectMappedCache(int blockSize, int cacheLines, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L1, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L2) {
-        super(blockSize, cacheLines, L1, L2);
+    public DirectMappedCache(int blockSize, int cacheLines, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L1, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L2, MemoryRepository memoryRepository) {
+        super(blockSize, cacheLines, L1, L2, memoryRepository);
     }
 
     public Actions runCmd(String cmd, int address, int data) {
@@ -31,6 +32,8 @@ public class DirectMappedCache extends Cache {
             if (cmd.equals(CMD.READ.toString())) {
                 readData(helperL1, actions, blockNr, index);
             } else if (cmd.equals(CMD.WRITE.toString())) {
+                addInMemory(address, data);
+
                 helperL1.get(blockNr).set(index, data);
                 helperL2.get(blockNr).set(index, data);
 
@@ -43,6 +46,7 @@ public class DirectMappedCache extends Cache {
             if (cmd.equals(CMD.READ.toString())) {
                 readData(helperL2, actions, blockNr, index);
             } else if (cmd.equals(CMD.WRITE.toString())) {
+                addInMemory(address, data);
                 helperL2.get(blockNr).set(index, data);
             }
 
@@ -54,8 +58,8 @@ public class DirectMappedCache extends Cache {
             getL1().get(l1CacheLineIndex).put(blockNr, helperL2.get(blockNr));
             getL2().put(l2CacheLineIndex, helperL2);
         } else {
-            actions.getActions().add("Address not found");
-            ArrayList<Integer> helper = writeData(cmd, index, data);
+            actions.getActions().add("Address not found in Cache");
+            ArrayList<Integer> helper = writeData(address, cmd, index, data);
 
             if (helperL1 == null && helperL2 == null) {
                 helperL1 = new HashMap<>();
@@ -66,7 +70,7 @@ public class DirectMappedCache extends Cache {
                 getL1().put(l1CacheLineIndex, helperL1);
                 getL2().put(l2CacheLineIndex, helperL2);
             } else if (helperL1 != null && helperL2 == null) {
-                actions.getActions().add("Block " + getBinary(Integer.parseInt(helperL1.keySet().iterator().next() + "")) + " gets replaced in L1 cache");
+                actions.getActions().add("Block " + helperL1.keySet().iterator().next() + " gets replaced in L1 cache");
 
                 helperL2 = new HashMap<>();
                 helperL2.put(blockNr, helper);
@@ -75,9 +79,9 @@ public class DirectMappedCache extends Cache {
                 getL2().put(l2CacheLineIndex, helperL2);
             } else {
                 if(helperL1 != null) {
-                    actions.getActions().add("Block " + getBinary(Integer.parseInt(helperL1.keySet().iterator().next() + "")) + " gets replaced in L1 cache");
+                    actions.getActions().add("Block " + helperL1.keySet().iterator().next()+ " gets replaced in L1 cache");
                 }
-                actions.getActions().add("Block " + getBinary(Integer.parseInt(helperL2.keySet().iterator().next() + "")) + " gets replaced in L2 cache");
+                actions.getActions().add("Block " + helperL2.keySet().iterator().next() + " gets replaced in L2 cache");
 
                 getL1().put(l1CacheLineIndex, new HashMap<>());
                 getL1().get(l1CacheLineIndex).put(blockNr, helper);

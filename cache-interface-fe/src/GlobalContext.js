@@ -9,6 +9,11 @@ const GlobalProvider = ({ children }) => {
     const [response, setResponse] = useState(null);
     const [actions, setActions] = useState(null);
     const [address, setAddress] = useState(null);
+    const [memory, setMemory] = useState(null);
+
+    const updateMemory = (newMemory) => {
+        setMemory(newMemory);
+    }
 
     const updateAddress = (newAddress) => {
         setAddress(newAddress);
@@ -50,7 +55,7 @@ const GlobalProvider = ({ children }) => {
         <GlobalContext.Provider
             value={{ cacheType,
                 updateCache, rs, updateRS,
-                parameters, updateParams, response, updateResponse, actions, updateActions, address, updateAddress, addParams }}
+                parameters, updateParams, response, updateResponse, actions, updateActions, address, updateAddress, addParams, memory, updateMemory }}
         >
             {children}
         </GlobalContext.Provider>

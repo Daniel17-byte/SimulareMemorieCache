@@ -8,11 +8,13 @@ const Simulation = () => {
         runSimulationApi,
         runCommand,
         viewAddressApi,
+        seeMemory,
         viewAddressCommand,
-        runCommandApi
+        runCommandApi,
+        getMemoryApi
     } = Endpoints();
 
-    const {cacheType, updateCache, parameters, response, updateResponse, rs, updateRS, actions, updateActions, address, addParams} = useGlobalContext();
+    const {cacheType, updateCache, parameters, response, updateResponse, rs, updateRS, actions, updateActions, address, addParams, memory} = useGlobalContext();
 
     useEffect(() => {
 
@@ -24,6 +26,7 @@ const Simulation = () => {
         } catch (error) {
             console.error('Eroare la preluarea datelor:', error);
         }
+        await viewMemory();
     };
 
     const handleRunTest = async () => {
@@ -32,6 +35,7 @@ const Simulation = () => {
         } catch (error) {
             console.error('Eroare la preluarea datelor:', error);
         }
+        await viewMemory();
     };
 
     const viewAddress = async () => {
@@ -41,6 +45,18 @@ const Simulation = () => {
             console.error('Eroare la view address:', error);
         }
     }
+
+    const viewMemory = async () => {
+        try {
+            await getMemoryApi(cacheType, seeMemory);
+        } catch (error) {
+            console.error('Eroare la view memory:', error);
+        }
+    }
+
+    useEffect(() => {
+        viewMemory()
+    }, [cacheType, rs]);
 
     return (
         <div>
@@ -166,8 +182,17 @@ const Simulation = () => {
                 </div>
                 <div className="col2">
                     { address  &&
-                        <div>
+                        <div className="add">
                             {address.address}
+                        </div>
+                    }
+
+                    {
+                        memory &&
+                        <div className="memory">
+                            { memory.map((entry, index) => (
+                                <> <span style={{fontWeight : "bold"}}>{entry.address}</span>-{entry.data}; </>
+                            )) }
                         </div>
                     }
                 </div>

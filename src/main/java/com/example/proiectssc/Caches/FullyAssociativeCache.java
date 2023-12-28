@@ -1,5 +1,6 @@
 package com.example.proiectssc.Caches;
 
+import com.example.proiectssc.Others.MemoryRepository;
 import com.example.proiectssc.Responses.Actions;
 import com.example.proiectssc.Others.CMD;
 
@@ -9,8 +10,8 @@ public class FullyAssociativeCache extends Cache {
     private final ArrayList<Integer> frequencyListL1 = new ArrayList<>();
     private final ArrayList<Integer> frequencyListL2 = new ArrayList<>();
 
-    public FullyAssociativeCache(int blockSize, int cacheLines, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L1, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L2) {
-        super(blockSize, cacheLines, L1, L2);
+    public FullyAssociativeCache(int blockSize, int cacheLines, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L1, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L2, MemoryRepository memoryRepository) {
+        super(blockSize, cacheLines, L1, L2, memoryRepository);
     }
 
     public Actions runCmd(String cmd, int address, int data) {
@@ -46,6 +47,7 @@ public class FullyAssociativeCache extends Cache {
             if (cmd.equals(CMD.READ.toString())) {
                 readData(helperL1, actions, blockNr, index);
             } else if (cmd.equals(CMD.WRITE.toString())) {
+                addInMemory(address, data);
                 helperL1.get(blockNr).set(index, data);
                 helperL2.get(blockNr).set(index, data);
             }
@@ -55,6 +57,7 @@ public class FullyAssociativeCache extends Cache {
             if (cmd.equals(CMD.READ.toString())) {
                 readData(helperL2, actions, blockNr, index);
             } else if (cmd.equals(CMD.WRITE.toString())) {
+                addInMemory(address, data);
                 helperL2.get(blockNr).set(index, data);
             }
             if (helperL1.size() < getCacheLines() / 2) {
@@ -63,24 +66,24 @@ public class FullyAssociativeCache extends Cache {
             actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
             helperL1.put(blockNr, helperL2.get(blockNr));
         } else {
-            actions.getActions().add("Address not found");
+            actions.getActions().add("Address not found in Cache");
 
             if (helperL1.size() == getCacheLines() / 2 && helperL2.size() == getCacheLines()) {
                 actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
                 actions.getActions().add(replaceBlockInCache(helperL2, frequencyListL2, "L2"));
 
-                ArrayList<Integer> helper = writeData(cmd, index, data);
+                ArrayList<Integer> helper = writeData(address, cmd, index, data);
 
                 helperL1.put(blockNr, helper);
                 helperL2.put(blockNr, helper);
             } else if (helperL1.size() < getCacheLines() / 2 && helperL2.size() < getCacheLines()) {
-                ArrayList<Integer> helper = writeData(cmd, index, data);
+                ArrayList<Integer> helper = writeData(address, cmd, index, data);
 
                 helperL1.put(blockNr, helper);
                 helperL2.put(blockNr, helper);
             } else {
                 actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
-                ArrayList<Integer> helper = writeData(cmd, index, data);
+                ArrayList<Integer> helper = writeData(address, cmd, index, data);
 
                 helperL1.put(blockNr, helper);
                 helperL2.put(blockNr, helper);

@@ -1,5 +1,6 @@
 package com.example.proiectssc.Caches;
 
+import com.example.proiectssc.Others.MemoryRepository;
 import com.example.proiectssc.Responses.Actions;
 import com.example.proiectssc.Others.CMD;
 import lombok.Getter;
@@ -12,8 +13,8 @@ public class SetAssociativeCache extends Cache {
     @Getter
     private final int k;
 
-    public SetAssociativeCache(int blockSize, int cacheLines, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L1, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L2, int k) {
-        super(blockSize, cacheLines, L1, L2);
+    public SetAssociativeCache(int blockSize, int cacheLines, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L1, HashMap<Integer, HashMap<Integer, ArrayList<Integer>>> L2, int k, MemoryRepository memoryRepository) {
+        super(blockSize, cacheLines, L1, L2, memoryRepository);
         this.k = k;
     }
 
@@ -43,6 +44,7 @@ public class SetAssociativeCache extends Cache {
             if(cmd.equals(CMD.READ.toString())) {
                 readData(helperL1, actions, blockNr, index);
             } else if(cmd.equals(CMD.WRITE.toString())){
+                addInMemory(address, data);
                 helperL1.get(blockNr).set(index, data);
                 helperL2.get(blockNr).set(index, data);
                 getL1().put(l1CacheSetIndex, helperL1);
@@ -54,26 +56,27 @@ public class SetAssociativeCache extends Cache {
             if (cmd.equals(CMD.READ.toString())) {
                 readData(helperL2, actions, blockNr, index);
             } else if (cmd.equals(CMD.WRITE.toString())) {
+                addInMemory(address, data);
                 helperL2.get(blockNr).set(index, data);
                 getL2().put(l2CacheSetIndex, helperL2);
             }
 
             if (helperL1 != null && helperL1.size() < k) {
-                ArrayList<Integer> helper = writeData(cmd, index, data);
+                ArrayList<Integer> helper = writeData(address, cmd, index, data);
                 helperL1.put(blockNr, helper);
                 getL1().put(l1CacheSetIndex, helperL1);
             }
 
             if (helperL1 != null){
-                actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
+                actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1", "FIFO"));
                 helperL1.put(blockNr, helperL2.get(blockNr));
             }
 
             getL1().put(l1CacheSetIndex, helperL1);
         } else {
-            actions.getActions().add("Address not found");
+            actions.getActions().add("Address not found in Cache");
             if (helperL1 == null && helperL2 == null) {
-                ArrayList<Integer> helper = writeData(cmd, index, data);
+                ArrayList<Integer> helper = writeData(address, cmd, index, data);
 
                 helperL1 = new HashMap<>();
                 helperL2 = new HashMap<>();
@@ -83,9 +86,9 @@ public class SetAssociativeCache extends Cache {
                 getL1().put(l1CacheSetIndex, helperL1);
                 getL2().put(l2CacheSetIndex, helperL2);
             } else if (helperL1 != null && helperL2 == null) {
-                actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
+                actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1", "FIFO"));
 
-                ArrayList<Integer> helper = writeData(cmd, index, data);
+                ArrayList<Integer> helper = writeData(address, cmd, index, data);
 
                 helperL2 = new HashMap<>();
                 helperL2.put(blockNr, helper);
@@ -94,10 +97,10 @@ public class SetAssociativeCache extends Cache {
                 getL1().put(l1CacheSetIndex, helperL1);
                 getL2().put(l2CacheSetIndex, helperL2);
             } else if (helperL1 != null && helperL1.size() == k && helperL2.size() == k) {
-                actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
-                actions.getActions().add(replaceBlockInCache(helperL2, frequencyListL2, "L2"));
+                actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1", "FIFO"));
+                actions.getActions().add(replaceBlockInCache(helperL2, frequencyListL2, "L2", "FIFO"));
 
-                ArrayList<Integer> helper = writeData(cmd, index, data);
+                ArrayList<Integer> helper = writeData(address, cmd, index, data);
 
                 helperL1.put(blockNr, helper);
                 helperL2.put(blockNr, helper);
@@ -105,7 +108,7 @@ public class SetAssociativeCache extends Cache {
                 getL1().put(l1CacheSetIndex, helperL1);
                 getL2().put(l2CacheSetIndex, helperL2);
             } else if (helperL1 != null && helperL1.size() < k && helperL2.size() < k) {
-                ArrayList<Integer> helper = writeData(cmd, index, data);
+                ArrayList<Integer> helper = writeData(address, cmd, index, data);
 
                 helperL1.put(blockNr, helper);
                 helperL2.put(blockNr, helper);
@@ -113,10 +116,10 @@ public class SetAssociativeCache extends Cache {
                 getL1().put(l1CacheSetIndex, helperL1);
                 getL2().put(l2CacheSetIndex, helperL2);
             } else {
-                ArrayList<Integer> helper = writeData(cmd, index, data);
+                ArrayList<Integer> helper = writeData(address, cmd, index, data);
 
                 if (helperL1 != null) {
-                    actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1"));
+                    actions.getActions().add(replaceBlockInCache(helperL1, frequencyListL1, "L1", "FIFO"));
                     helperL1.put(blockNr, helper);
                 }
 

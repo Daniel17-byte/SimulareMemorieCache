@@ -1,7 +1,7 @@
 import {useGlobalContext} from "./GlobalContext";
 
 const Endpoints = () => {
-    const {parameters, updateResponse, actions, updateActions, updateRS, updateAddress} = useGlobalContext();
+    const {parameters, updateResponse, actions, updateActions, updateRS, updateAddress, memory, updateMemory} = useGlobalContext();
 
     const url = "http://localhost:8080/api/v1/cache/";
     const directCacheURL = "/direct/";
@@ -12,6 +12,7 @@ const Endpoints = () => {
     const viewCacheCommand = "/view-cache";
     const runCommand = "/run-cmd";
     const runSimulation = "/simulation";
+    const seeMemory = "/memory";
 
     const viewCacheApi = async (cacheType, cmd) => {
         fetch(`${url}${cacheType}${cmd}?${parameters.join("&")}`)
@@ -88,6 +89,17 @@ const Endpoints = () => {
             });
     };
 
+    const getMemoryApi = async (cacheType, cmd) => {
+        fetch(`${url}${cacheType}${cmd}`)
+            .then((response) => response.json())
+            .then((data) => {
+                updateMemory(data);
+            })
+            .catch((err) => {
+                console.log(err.message);
+            });
+    };
+
 
     return {
         directCacheURL,
@@ -97,10 +109,12 @@ const Endpoints = () => {
         viewCacheCommand,
         runCommand,
         runSimulation,
+        seeMemory,
         runSimulationApi,
         viewCacheApi,
         viewAddressApi,
-        runCommandApi
+        runCommandApi,
+        getMemoryApi
     };
 }
 

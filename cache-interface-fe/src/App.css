@@ -126,8 +126,21 @@ th {
 }
 
 .col2 {
-    margin: 30px 10px 0px 10px;
+    margin: 0px 0px 0px 0px;
     font-size: 20px;
     width: 40%;
+}
+
+.memory {
+    width: 250px;
+    border: 1px solid gray;
+    max-height: 200px;
     overflow: auto;
+}
+
+.add{
+    width: 250px;
+    border: 1px solid gray;
+    max-height: 50px;
+    overflow-x: auto;
 }

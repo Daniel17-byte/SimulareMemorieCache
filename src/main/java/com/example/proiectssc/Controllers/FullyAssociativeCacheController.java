@@ -1,11 +1,14 @@
 package com.example.proiectssc.Controllers;
 
 import com.example.proiectssc.Caches.FullyAssociativeCache;
+import com.example.proiectssc.Models.Memory;
+import com.example.proiectssc.Others.MemoryRepository;
 import com.example.proiectssc.Responses.Actions;
 import com.example.proiectssc.Responses.Address;
 import com.example.proiectssc.Others.CMD;
 import com.example.proiectssc.Responses.CacheTables;
 import com.example.proiectssc.Responses.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +21,14 @@ import java.util.Random;
 @CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/v1/cache/associative/")
 public class FullyAssociativeCacheController {
-    FullyAssociativeCache fullyAssociativeCache = new FullyAssociativeCache(4,16, new HashMap<>(), new HashMap<>());
+    @Autowired
+    final MemoryRepository memoryRepository;
+    FullyAssociativeCache fullyAssociativeCache;
+
+    public FullyAssociativeCacheController(MemoryRepository memoryRepository) {
+        this.memoryRepository = memoryRepository;
+        this.fullyAssociativeCache = new FullyAssociativeCache(4,16, new HashMap<>(), new HashMap<>(), memoryRepository);
+    }
 
     @GetMapping(value = "/run-cmd")
     public ResponseEntity<Actions> runCmd(@RequestParam String cmd, @RequestParam int address, @RequestParam int data){
@@ -58,5 +68,16 @@ public class FullyAssociativeCacheController {
         }
 
         return new ResponseEntity<>(tests, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/memory")
+    public ResponseEntity<ArrayList<Memory>> getMemoryData(){
+        ArrayList<Memory> memory = new ArrayList<>();
+
+        for (int i = 0; i < 1000; i++) {
+            memory.add(memoryRepository.getData(i));
+        }
+
+        return new ResponseEntity<>(memory, HttpStatus.OK);
     }
 }
